@@ -11,10 +11,12 @@ using System.Windows.Forms;
 using System.Diagnostics.Metrics;
 using System.Diagnostics;
 using Microsoft.WindowsAPICodePack.Net;
-using System.Net;
-using System.Linq;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.XPath;
+using System.Net.Http;
+using System.Xml.XPath;
 using HtmlAgilityPack;
-
 namespace virtualboxManagement
 {
     internal class AppManager
@@ -24,7 +26,7 @@ namespace virtualboxManagement
         public string macAddress = "";
         public string gateway = "";
         public string ipHost = "";
-        public string version = "";
+        public string versionInstaled = "";
 
         public void GetLocalAddress(NetworkInterfaceType _type)
         {
@@ -97,23 +99,23 @@ namespace virtualboxManagement
                 {
                     return false;
                 }
-                version = versionInfo.FileVersion;
+                versionInstaled = versionInfo.FileVersion;
                 int pointCuente = 0;
-                foreach (char aract in version.ToCharArray())
+                foreach (char aract in versionInstaled.ToCharArray())
                 {
                     if (aract == '.') { pointCuente++; }
                 }
                 if (pointCuente > 2)
                 {
                     pointCuente = 0;
-                    for (int i = 0; i < version.Length; i++)
+                    for (int i = 0; i < versionInstaled.Length; i++)
                     {
-                        if (version[i] == '.')
+                        if (versionInstaled[i] == '.')
                         {
                             pointCuente++;
                             if (pointCuente == 3)
                             {
-                                version = version.Substring(0, i);
+                                versionInstaled = versionInstaled.Substring(0, i);
                                 return true;
                             }
                         }
@@ -127,19 +129,25 @@ namespace virtualboxManagement
         public void Version(Label lavel)
         {
             string url = "https://download.virtualbox.org/virtualbox/";
-            string htmlCode;
-            using (WebClient client = new WebClient())
+            var web = new HtmlWeb();
+            var doc = web.Load(url);
+            var nodes = doc.DocumentNode.SelectNodes("//a[@href]");
+            string version = "";
+            foreach (var node in nodes)
             {
-                htmlCode = client.DownloadString(url);
+                string str = node.GetAttributeValue("href", "");
+                if (Regex.IsMatch(str, @"[0-9]\.[0-9]\.[0-9]/")) { version = Regex.Match(str, @"[0-9]\.[0-9]\.[0-9]").Value; }
             }
-            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-            doc.LoadHtml(htmlCode);
-
-            HtmlNode vbVersionNode = doc.DocumentNode.SelectSingleNode("");
-            string vbVersion = vbVersionNode.InnerText.Trim();
-
-            lavel.Text = vbVersion;
-
+            if(versionInstaled.Equals(version))
+            {
+                lavel.Text = versionInstaled +""+ "(Last Version)";
+                lavel.ForeColor = Color.Green;
+            }
+            else
+            {
+                lavel.Text = versionInstaled + "" + "(Outdated)";
+                lavel.ForeColor = Color.Goldenrod;
+            }
         }
     }
 }

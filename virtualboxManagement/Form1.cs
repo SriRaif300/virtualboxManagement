@@ -50,8 +50,8 @@ namespace virtualboxManagement
                 IsInstalled.Text = "No";
                 IsInstalled.ForeColor = Color.Red;
             }
-            Version.Text = app.version;
-            //app.Version(Version);
+            Version.Text = app.versionInstaled;
+            app.Version(Version);
         }
 
     }
